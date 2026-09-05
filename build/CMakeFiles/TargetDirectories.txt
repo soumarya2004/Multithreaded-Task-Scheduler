@@ -1,0 +1,4 @@
+C:/Projects/multithreaded-task-scheduler/build/CMakeFiles/scheduler.dir
+C:/Projects/multithreaded-task-scheduler/build/CMakeFiles/basic_usage.dir
+C:/Projects/multithreaded-task-scheduler/build/CMakeFiles/edit_cache.dir
+C:/Projects/multithreaded-task-scheduler/build/CMakeFiles/rebuild_cache.dir
