@@ -141,16 +141,16 @@ int main(){
     //test 9: heterogeneous argument list
     {
         scheduler::ThreadPool pool(2);
-        auto concat = [](std::string prefix, int number, double value) {
+        auto concat=[](std::string prefix, int number, double value) {
             return prefix+":"+ std::to_string(number) +":"+ std::to_string(value);
         };
-        std::future<std::string> result = pool.submit(
+        std::future<std::string> result=pool.submit(
             concat,
             std::string("a"),
             42,
             3.14
         );
-        assert(result.get() == "a:42:3.140000");
+        assert(result.get()=="a:42:3.140000");
         std::printf(
             "[test 9] OK: heterogeneous arguments were forwarded correctly\n"
         );
