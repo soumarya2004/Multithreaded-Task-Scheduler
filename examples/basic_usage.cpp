@@ -127,6 +127,34 @@ int main(){
         assert(f3.get()==3);
         std::printf("[test 7] OK: queued tasks drained and futures fulfilled on shutdown\n");
     }
+    //test 8: non-trivial return type (std::string)
+    {
+        scheduler::ThreadPool pool(2);
+        std::future<std::string> result=pool.submit([]{
+            return std::string("hello from worker");
+        });
+        assert(result.get()=="hello from worker");
+        std::printf(
+            "[test 8] OK: std::string return value propagated through future\n"
+        );
+    }
+    //test 9: heterogeneous argument list
+    {
+        scheduler::ThreadPool pool(2);
+        auto concat = [](std::string prefix, int number, double value) {
+            return prefix+":"+ std::to_string(number) +":"+ std::to_string(value);
+        };
+        std::future<std::string> result = pool.submit(
+            concat,
+            std::string("a"),
+            42,
+            3.14
+        );
+        assert(result.get() == "a:42:3.140000");
+        std::printf(
+            "[test 9] OK: heterogeneous arguments were forwarded correctly\n"
+        );
+    }
     std::printf("all phase 2 smoke tests passed\n");
     return 0;
 }
