@@ -19,6 +19,7 @@ if(SCHEDULER_ENABLE_TSAN)
 endif()
 add_library(scheduler
     src/thread_pool.cpp
+    src/work_queue.cpp
 )
 target_include_directories(scheduler PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

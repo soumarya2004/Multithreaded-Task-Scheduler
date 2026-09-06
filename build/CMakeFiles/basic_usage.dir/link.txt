@@ -1,3 +1,0 @@
-C:\msys64\ucrt64\bin\cmake.exe -E rm -f CMakeFiles\basic_usage.dir/objects.a
-C:\msys64\ucrt64\bin\ar.exe qc CMakeFiles\basic_usage.dir/objects.a @CMakeFiles\basic_usage.dir\objects1.rsp
-C:\msys64\ucrt64\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\basic_usage.dir/objects.a -Wl,--no-whole-archive -o basic_usage.exe -Wl,--out-implib,libbasic_usage.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\basic_usage.dir\linkLibs.rsp

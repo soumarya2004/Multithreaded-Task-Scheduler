@@ -1,6 +1,6 @@
 #include "scheduler/thread_pool.hpp"
-#include <stdexcept>
-#include <utility>
+#include<stdexcept>
+#include<utility>
 
 namespace scheduler{
     std::size_t ThreadPool::default_thread_count() noexcept{
@@ -18,30 +18,9 @@ namespace scheduler{
     ThreadPool::~ThreadPool(){
         shutdown();
     }
-    void ThreadPool::submit(std::function<void()> task){
-        {
-            std::lock_guard<std::mutex> lock(queue_mutex_);
-            if(stopping_){
-                throw std::runtime_error("ThreadPool::submit called after shutdown");
-            }
-            tasks_.push(std::move(task));
-        }
-        queue_cv_.notify_one();
-    }
-    std::size_t ThreadPool::pending_tasks() const noexcept{
-        std::lock_guard<std::mutex> lock(queue_mutex_);
-        return tasks_.size();
-    }
     void ThreadPool::shutdown(){
-        {
-            std::lock_guard<std::mutex> lock(queue_mutex_);
-            if(stopping_){
-                return;
-            }
-            stopping_=true;
-        }
-        queue_cv_.notify_all();
-        for(auto& worker: workers_){
+        queue_.close();
+        for(auto& worker: workers_) {
             if(worker.joinable()){
                 worker.join();
             }
@@ -49,20 +28,12 @@ namespace scheduler{
     }
     void ThreadPool::worker_loop(){
         for(;;){
-            std::function<void()> task;
-            {
-                std::unique_lock<std::mutex> lock(queue_mutex_);
-                queue_cv_.wait(lock, [this]{
-                    return stopping_||!tasks_.empty();
-                });
-                if(stopping_ && tasks_.empty()){
-                    return;
-                }
-                task=std::move(tasks_.front());
-                tasks_.pop();
+            std::optional<Task> task=queue_.wait_and_pop();
+            if(!task){
+                return;
             }
             try{
-                task();
+                (*task)();
             }
             catch(...){}
         }
