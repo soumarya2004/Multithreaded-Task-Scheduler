@@ -5,7 +5,11 @@
 namespace scheduler{
     void WorkQueue::push(Task task){
         {
-            std::lock_guard<std::mutex> lock(mutex_);
+            std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
+            if(!lock.try_lock()){
+                contention_count_.fetch_add(1, std::memory_order_relaxed);
+                lock.lock();
+            }
             if(closed_){
                 throw std::runtime_error("WorkQueue::push called on a closed queue");
             }
@@ -14,7 +18,11 @@ namespace scheduler{
         cv_.notify_one();
     }
     std::optional<Task> WorkQueue::wait_and_pop(){
-        std::unique_lock<std::mutex> lock(mutex_);
+        std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
+        if(!lock.try_lock()){
+            contention_count_.fetch_add(1, std::memory_order_relaxed);
+            lock.lock();
+        }
         cv_.wait(lock, [this]{
             return closed_||!tasks_.empty();
         });
@@ -27,7 +35,11 @@ namespace scheduler{
     }
     void WorkQueue::close(){
         {
-            std::lock_guard<std::mutex> lock(mutex_);
+            std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
+            if(!lock.try_lock()){
+                contention_count_.fetch_add(1, std::memory_order_relaxed);
+                lock.lock();
+            }
             if(closed_){
                 return;
             }
@@ -36,11 +48,19 @@ namespace scheduler{
         cv_.notify_all();
     }
     std::size_t WorkQueue::size() const noexcept{
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
+        if(!lock.try_lock()){
+            contention_count_.fetch_add(1, std::memory_order_relaxed);
+            lock.lock();
+        }
         return tasks_.size();
     }
     bool WorkQueue::empty() const noexcept{
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::unique_lock<std::mutex> lock(mutex_, std::defer_lock);
+        if(!lock.try_lock()){
+            contention_count_.fetch_add(1, std::memory_order_relaxed);
+            lock.lock();
+        }
         return tasks_.empty();
     }
 }

@@ -5,6 +5,8 @@
 #include<mutex>
 #include<optional>
 #include<queue>
+#include<atomic>
+#include<cstdint>
 
 namespace scheduler{
     class WorkQueue{
@@ -19,10 +21,14 @@ namespace scheduler{
             void close();
             [[nodiscard]] std::size_t size() const noexcept;
             [[nodiscard]] bool empty() const noexcept;
+            [[nodiscard]] std::uint64_t contention_count() const noexcept{
+                return contention_count_.load(std::memory_order_relaxed);
+            }
         private:
             mutable std::mutex mutex_;
             std::condition_variable cv_;
             std::queue<Task> tasks_;
             bool closed_=false;
+            mutable std::atomic<std::uint64_t> contention_count_{0};
     };
 }
