@@ -13,7 +13,7 @@ int main(){
     using namespace std::chrono_literals;
     //test 1: among QUEUED tasks, higher priority runs first
     {
-        constexpr std::size_t kWorkers=2;
+        constexpr std::size_t kWorkers=1;
         PriorityThreadPool pool(kWorkers);
         std::atomic<int> blockers_started{0};
         std::vector<std::future<void>> blockers;
@@ -121,6 +121,45 @@ int main(){
             "behind already-running LOW tasks (no preemption exists)\n",
             static_cast<long long>(latency_ms));
     }
-    std::printf("All phase 3 smoke tests passes\n");
+    //test 4: starvation — continuous HIGH priority work can delay LOW
+    {
+        constexpr std::size_t kWorkers=1;
+        PriorityThreadPool pool(kWorkers);
+        std::promise<void> release_blocker;
+        auto blocker_gate=release_blocker.get_future().share();
+        std::atomic<bool> blocker_started{false};
+        std::atomic<bool> low_started{false};
+        auto blocker=pool.submit(Priority::NORMAL, [&]{
+            blocker_started.store(true, std::memory_order_release);
+            blocker_gate.wait();
+        });
+        while(!blocker_started.load(std::memory_order_acquire)){
+            std::this_thread::yield();
+        }
+        auto low=pool.submit(Priority::LOW, [&]{
+            low_started.store(true, std::memory_order_release);
+        });
+        std::vector<std::future<void>> high_tasks;
+        const auto end_time=std::chrono::steady_clock::now()+200ms;
+        while(std::chrono::steady_clock::now()<end_time){
+            high_tasks.push_back(
+                pool.submit(Priority::HIGH, []{
+                    std::this_thread::sleep_for(10ms);
+                })
+            );
+            std::this_thread::sleep_for(5ms);
+        }
+        release_blocker.set_value();
+        assert(low.wait_for(50ms)==std::future_status::timeout);
+        assert(!low_started.load(std::memory_order_acquire));
+        for(auto& task:high_tasks){
+            task.get();
+        }
+        low.get();
+        blocker.get();
+        assert(low_started.load(std::memory_order_acquire));
+        std::printf("[test 4] OK: LOW task was starved while HIGH priority work kept arriving\n");
+    }
+    std::printf("All priority scheduler tests passed\n");
     return 0;
 }
