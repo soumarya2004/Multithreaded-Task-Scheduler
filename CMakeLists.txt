@@ -20,6 +20,8 @@ endif()
 add_library(scheduler
     src/thread_pool.cpp
     src/work_queue.cpp
+    src/priority_queue.cpp
+    src/scheduler.cpp
 )
 target_include_directories(scheduler PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -32,6 +34,9 @@ target_compile_features(scheduler PUBLIC cxx_std_20)
 if(SCHEDULER_BUILD_EXAMPLES)
     add_executable(basic_usage examples/basic_usage.cpp)
     target_link_libraries(basic_usage PRIVATE scheduler scheduler_warnings scheduler_sanitizers)
+
+    add_executable(priority_usage examples/priority_usage.cpp)
+    target_link_libraries(priority_usage PRIVATE scheduler scheduler_warnings scheduler_sanitizers)
 endif()
 if(SCHEDULER_BUILD_TESTS)
     enable_testing()
