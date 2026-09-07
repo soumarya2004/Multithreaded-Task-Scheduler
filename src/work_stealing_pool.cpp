@@ -5,7 +5,7 @@
 namespace scheduler{
     std::size_t WorkStealingThreadPool::default_thread_count() noexcept{
         const unsigned int hw=std::thread::hardware_concurrency();
-        return hw==1? 1:static_cast<std::size_t>(hw);
+        return hw==0? 1:static_cast<std::size_t>(hw);
     }
     WorkStealingThreadPool::WorkStealingThreadPool(std::size_t num_threads){
         queues_.reserve(num_threads);
@@ -73,7 +73,7 @@ namespace scheduler{
             std::uniform_int_distribution<std::size_t> dist(0, n-2);
             const std::size_t start=dist(rng);
             for(std::size_t offset=0; offset<n-1; ++offset){
-            const std::size_t victim=(self_index+1+(start+offset)%(n-1))%n;
+                const std::size_t victim=(self_index+1+(start+offset)%(n-1))%n;
                 if(auto task=queues_[victim]->try_steal()){
                     run(*task);
                     return true;

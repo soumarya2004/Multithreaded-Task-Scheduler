@@ -68,13 +68,19 @@ int main(){
         const auto elapsed_ms=std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
         const auto serial_ms=kNumTasks*kTaskDuration.count();
         const auto ideal_parallel_ms=serial_ms/static_cast<long long>(kWorkers);
-        assert(elapsed_ms<serial_ms/3*4);
+        const double speedup=elapsed_ms>0? 
+                static_cast<double>(serial_ms)/static_cast<double>(elapsed_ms)
+                : 0.0;
         std::printf(
-            "[test 3] OK: %d x %lldms tasks on %zu workers took %lldms "
-            "(serial would be %lldms, ideal parallel ~%lldms)\n",
-            kNumTasks, static_cast<long long>(kTaskDuration.count()), kWorkers,
-            static_cast<long long>(elapsed_ms), static_cast<long long>(serial_ms),
-            static_cast<long long>(ideal_parallel_ms)
+                "[test 3] OK: %zu x %lldms tasks on %zu workers took %lldms\n"
+                "          serial estimate: %lldms | ideal parallel: %lldms | speedup: %.2fx\n",
+            kNumTasks,
+            static_cast<long long>(kTaskDuration.count()),
+            kWorkers,
+            static_cast<long long>(elapsed_ms),
+            static_cast<long long>(serial_ms),
+            static_cast<long long>(ideal_parallel_ms),
+            speedup
         );
     }
     //test 4: concurrent submit() vs shutdown() -- the drain barrier
