@@ -1,2 +1,8 @@
 ﻿build*/
 benchmark_results.txt
+
+# TSan generated files
+build-tsan-sweep/
+Testing/
+build-tsan-sweep.build.log
+build-tsan-sweep.configure.log

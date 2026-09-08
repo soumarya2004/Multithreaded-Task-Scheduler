@@ -1,12 +1,15 @@
 #include "scheduler/work_stealing_pool.hpp"
-#include <gtest/gtest.h>
+#include "scheduler/worker.hpp"
+#include<gtest/gtest.h>
 #include<atomic>
 #include<chrono>
 #include<future>
 #include<stdexcept>
 #include<vector>
+#include<thread>
 #include<cstdio>
 using namespace std::chrono_literals;
+using scheduler::WorkStealingDeque;
 using scheduler::WorkStealingThreadPool;
 
 TEST(WorkStealingThreadPool, ExecutesManyTasksCorrectly) {
@@ -105,4 +108,35 @@ TEST(WorkStealingThreadPool, SubmitVsShutdownRaceNeverLosesATask){
         }
     }
     EXPECT_EQ(succeeded+threw, kTrials);
+}
+TEST(WorkStealingThreadPool, PendingTasksCanOvercountAcrossIndependentlyLockedQueues) {
+    WorkStealingDeque queue_a;
+    WorkStealingDeque queue_b;
+    for(int i=0; i<3; ++i){
+        queue_a.push_back([] {});
+    }
+    for(int i=0; i<2; ++i){
+        queue_b.push_back([] {});
+    }
+    ASSERT_EQ(queue_a.size(), 3u);
+    ASSERT_EQ(queue_b.size(), 2u);
+    std::promise<void> queue_a_sampled;
+    std::shared_future<void> queue_a_sampled_signal(queue_a_sampled.get_future());
+    std::promise<void> new_task_landed;
+    std::shared_future<void> new_task_landed_signal(new_task_landed.get_future());
+    std::thread concurrent_producer([&] {
+        queue_a_sampled_signal.wait();
+        queue_b.push_back([] {});
+        new_task_landed.set_value();
+    });
+    std::size_t sampled_total=0;
+    sampled_total+=queue_a.size();
+    queue_a_sampled.set_value();
+    new_task_landed_signal.wait();
+    sampled_total+=queue_b.size();
+    concurrent_producer.join();
+    EXPECT_EQ(sampled_total, 6u);
+    EXPECT_GT(sampled_total, 5u) << "pending_tasks()-style sampling across independently locked "
+                                     "queues can overcount when new work lands mid-sample, not just "
+                                     "undercount when work is consumed mid-sample";
 }

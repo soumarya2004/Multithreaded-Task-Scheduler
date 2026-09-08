@@ -1,0 +1,3 @@
+# Known libstdc++ exception-related TSan false positive.
+race:std::__future_base::_Result
+race:std::__exception_ptr::exception_ptr
