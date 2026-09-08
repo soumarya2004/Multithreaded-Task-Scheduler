@@ -1,1 +1,2 @@
-﻿build/
+﻿build*/
+benchmark_results.txt
