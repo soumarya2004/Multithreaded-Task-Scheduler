@@ -262,7 +262,7 @@ static void BM_ThreadPool_UnevenLoad(benchmark::State& state){
         state.ResumeTiming();
     }
 }
-BENCHMARK(BM_ThreadPool_UnevenLoad)->Arg(4)->Arg(8);
+BENCHMARK(BM_ThreadPool_UnevenLoad)->Arg(1)->Arg(2)->Arg(4)->Arg(8)->Arg(16);
 static void BM_WorkStealingThreadPool_UnevenLoad(benchmark::State& state){
     const auto num_workers=static_cast<std::size_t>(state.range(0));
     constexpr int kTasks=200;
@@ -290,5 +290,5 @@ static void BM_WorkStealingThreadPool_UnevenLoad(benchmark::State& state){
         state.ResumeTiming();
     }
 }
-BENCHMARK(BM_WorkStealingThreadPool_UnevenLoad)->Arg(4)->Arg(8);
+BENCHMARK(BM_WorkStealingThreadPool_UnevenLoad)->Arg(1)->Arg(2)->Arg(4)->Arg(8)->Arg(16);
 BENCHMARK_MAIN();
