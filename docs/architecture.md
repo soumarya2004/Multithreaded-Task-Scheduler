@@ -2,9 +2,10 @@
 ## Work Stealing (Phase 4)
 
 `WorkStealingThreadPool` gives each worker its own `WorkStealingDeque`
-(mutex-protected, NOT lock-free — see `worker.hpp`'s doc comment for the
-explicit trade-off vs. a production Chase-Lev deque). A lock-free Chase-Lev
-deque is intentionally outside the scope of this final version.
+(mutex-protected, NOT lock-free). The implementation uses mutex-protected
+worker-local deques rather than a production-style lock-free Chase-Lev
+deque. A lock-free Chase-Lev deque is intentionally outside the scope of
+this final version.
 
 ### Architecture at a glance
 
@@ -137,7 +138,7 @@ no system package required.
 
 `WorkStealingThreadPool.PendingTasksCanOvercountAcrossIndependentlyLockedQueues`
 (`tests/test_scheduler.cpp`) turns the manually-traced overcount scenario
-into a regression-tested guarantee, rather than leaving it as a docs-only
+into a regression-tested guarantee, rather than leaving it as a documentation-only
 note. Since `pending_tasks()`'s internal `queues_` are private (no test
 hook was added to the production method), the test reconstructs the exact
 same sampling pattern — sequentially locking and reading `size()` on each
